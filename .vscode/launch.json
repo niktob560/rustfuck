@@ -1,0 +1,47 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'rustfuck'",
+            "program": "${workspaceRoot}/target/debug/${workspaceRootFolderName}",
+            // "args": [],
+            // "cwd": "${workspaceRoot}/target/debug/",
+            // "sourceLanguages": ["rust"]
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=rustfuck",
+                    "--package=rustfuck"
+                ],
+                "filter": {
+                    "name": "rustfuck",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }//,
+        // {
+        //     "type": "lldb",
+        //     "request": "launch",
+        //     "name": "Debug unit tests in executable 'rustfuck'",
+        //     "cargo": {
+        //         "args": [
+        //             "test",
+        //             "--no-run",
+        //             "--bin=rustfuck",
+        //             "--package=rustfuck"
+        //         ],
+        //         "filter": {
+        //             "name": "rustfuck",
+        //             "kind": "bin"
+        //         }
+        //     },
+        //     "args": [],
+        //     "cwd": "${workspaceFolder}"
+        // }
+    ]
+}
