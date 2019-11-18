@@ -1,2 +1,2 @@
 # rustfuck
-Basic brainfuck interpretator written in rust
+Basic brainfuck interpreter written in rust
