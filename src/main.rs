@@ -1,35 +1,35 @@
 use std::io::{self, Read};
 use std::env;
 use std::fs::File;
+extern crate time;
+use time::PreciseTime;
 
 
 fn parse(s : String, p: &mut usize, ar: &mut[u8; 64]) {
-    // println!("\nin {} p {} curr {}", s, p, ar[*p]);
     let mut is_cycled = true;
     let mut skip = 0;
     while is_cycled {
         is_cycled = false;
-        for i in 0..s.len() {
-            if skip == 0 {
-                // print!("{}", s.chars().skip(i).next().unwrap());
-                match s.chars().skip(i).next().unwrap() {
-                    '>' => *p += 1,
-                    '<' => {
+        for i in 0..s.len() {                               //Iterate all instructions
+            if skip == 0 {                                  //If don't need to skip
+                match s.chars().skip(i).next().unwrap() {   //Watch on curr instruction
+                    '>' => *p += 1,                         //Increment pointer
+                    '<' => {                                //Decrement pointer
                         if *p > 0 {
                             *p -= 1;
                         }
                     },
-                    '+' => ar[*p] += 1,
-                    '-' => {
+                    '+' => ar[*p] += 1,                     //Increment value
+                    '-' => {                                //Decrement value
                         if ar[*p] > 0 {
                             ar[*p] -= 1;
                         }
                     },
-                    '.' => print!("{}", ar[*p] as char),
-                    '[' =>  {
+                    '.' => print!("{}", ar[*p] as char),    //Print value
+                    '[' =>  {                               //Start loop if current value is not eq to 0
                                 if ar[*p] == 0 {
                                     let mut c = 0;
-                                    for j in i..s.len() {
+                                    for j in i..s.len() {   //Search for closing bracket
                                         match s.chars().skip(j).next().unwrap() {
                                             '[' => c += 1,
                                             ']' => {
@@ -38,61 +38,50 @@ fn parse(s : String, p: &mut usize, ar: &mut[u8; 64]) {
                                                 }
                                                 else if j >= i{
                                                     skip = j - i;
-                                                    // println!(">skip {} to {} {} chars", skip, s.chars().skip(skip).next().unwrap(), j);
-                                                    break;
+                                                    break;  //Found bracket
                                                 }
                                             },
                                             _ => {},
                                         }
                                     }
                                     if c != 0 {
-                                        // println!("Failed to find closing brackets");
-                                        return;
+                                        println!("Can't find closing bracket for instruction {}", i);
+                                        return;             //Can't find bracket
                                     }
                                 }
                             },
-                    ']' => {
+                    ']' => {                                //End of loop
                                 if ar[*p] != 0 {
-                                    // println!("SKIP");
                                     is_cycled = true;
-                                    // skip = s.len() - i;
                                     let mut c = 0;
-                                    // print!("\nsearch i {}\t", i);
-                                    for j in (0..i).rev() {
-                                        // print!("_{}_", s.chars().skip(j).next().unwrap());
+                                    for j in (0..i).rev() { //Search for opening bracket to create loop
                                         match s.chars().skip(j).next().unwrap() {
                                             '[' => {
-                                                // println!("\"[\"");
                                                 if c > 0 {
                                                     c -= 1;
                                                 }
                                                 else {
                                                     skip = s.len() - i + j;
-                                                    // println!("skip to {} {}, {}", j, s.chars().skip(j).next().unwrap(), skip);
-                                                    break;
+                                                    break; //Found
                                                 }
                                             },
                                             ']' => {
-                                                // println!("\"]\"");
                                                 c += 1;
                                             },
                                             _   => {},
                                         }
                                     }
-                                    // println!();
+                                    if c != 0 {
+                                        println!("Can't find opening bracket for instruction {}", i);
+                                        return;           //Can't find
+                                    }
                                 }
-                                // else {
-                                //     // println!("RET");
-                                //     return;
-                                // }
-
                             },
-                            _ => {},
+                    _ => {},
                 }
             }
             else {
-                skip -= 1;
-                // println!("skip");
+                skip -= 1;                              //Instruction skipped
             }
         }
     }
@@ -105,7 +94,7 @@ fn main() -> io::Result<()> {
     let mut args: Vec<String> = env::args().collect();
     args.remove(0);                                 //Remove call of rustfuck
 
-    let mut buf = String::new();
+    let mut buf = String::new();                    //String for user input
 
     if args.contains(&String::from("-h")) {
                                                     //Show help message
@@ -129,7 +118,7 @@ fn main() -> io::Result<()> {
             Ok(mut f) => {
                 match f.read_to_string(&mut buf) {
                     Ok(_) => {},
-                    Err(e) => {
+                    Err(e) => {                     //If can't open file
                         println!("Can't open file {}\n{}", filedir, e);
                         return Ok(());
                     },
@@ -141,18 +130,22 @@ fn main() -> io::Result<()> {
             },
         }
     }
-    let mut code = String::new();
-    for i in 0..buf.len() {
+    let mut code = String::new();                   //String for instructions
+    for i in 0..buf.len() {                         //Remove all shit from input
         match buf.chars().skip(i).next().unwrap() {
             '+' | '-' | '[' | ']' | '>' | '<' | '.' | ',' => code.push(buf.chars().skip(i).next().unwrap()),
             _ => {},
         }
     }
 
-    let mut array: [u8; 64] = [0; 64];
-    let mut pointer = 0;
-
+    let mut array: [u8; 64] = [0; 64];              //Array for values
+    let mut pointer = 0;                            //Current pointer
+    let start = PreciseTime::now();                 //Save current time for a nice statistics
     parse(code, &mut pointer, &mut array);
+    let end = PreciseTime::now();                   //Save time of ending parse work
+    println!("Done in {} milliseconds", start.to(end).num_milliseconds());  //print nice statistics
+
+
 
 
     Ok(())
