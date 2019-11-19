@@ -1,4 +1,4 @@
-# rustfuck
+# rustfuck [WIP]
 Basic brainfuck interpreter written in rust  
 
 Interpretate from file:
