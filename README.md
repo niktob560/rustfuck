@@ -18,3 +18,8 @@ rustfuck -o examples/addone.bf
 2
 ```
 rustfuck will print '>>>' to get a char from stdin
+  
+Show help:
+```bash
+rustfuck -h
+```
