@@ -1,4 +1,4 @@
-use std::io::{self, Read};
+use std::io::{self, Read, Write};
 use std::env;
 use std::fs::File;
 extern crate time;
@@ -26,57 +26,78 @@ fn parse(s : String, p: &mut usize, ar: &mut[u8; 64]) {
                         }
                     },
                     '.' => print!("{}", ar[*p] as char),    //Print value
+                    ',' => {
+                        print!(">>>");
+                        match io::stdout().flush() {
+                            Err(e) => {
+                                println!("Bad stdout");
+                                return;
+                            },
+                            _ => {},
+                        }
+                        let mut buf = [0u8, 1];
+                        let stdin = io::stdin();
+                        let mut handl = stdin.lock();
+                        match handl.read_exact(&mut buf) {
+                            Err(e) => {
+                                println!("Failed to read from stdin: {}", e);
+                                return;
+                            },
+                            _ => {},
+                        }
+                        ar[*p] = buf[0];
+                    },
                     '[' =>  {                               //Start loop if current value is not eq to 0
-                                if ar[*p] == 0 {
-                                    let mut c = 0;
-                                    for j in i..s.len() {   //Search for closing bracket
-                                        match s.chars().skip(j).next().unwrap() {
-                                            '[' => c += 1,
-                                            ']' => {
-                                                if c > 0 {
-                                                    c -= 1;
-                                                }
-                                                else if j >= i{
-                                                    skip = j - i;
-                                                    break;  //Found bracket
-                                                }
-                                            },
-                                            _ => {},
+                        if ar[*p] == 0 {
+                            let mut c = 0;
+                            for j in i..s.len() {   //Search for closing bracket
+                                match s.chars().skip(j).next().unwrap() {
+                                    '[' => c += 1,
+                                    ']' => {
+                                        if c > 0 {
+                                            c -= 1;
                                         }
-                                    }
-                                    if c != 0 {
-                                        println!("Can't find closing bracket for instruction {}", i);
-                                        return;             //Can't find bracket
-                                    }
+                                        else if j >= i{
+                                            skip = j - i;
+                                            break;  //Found bracket
+                                        }
+                                    },
+                                    _ => {},
                                 }
-                            },
+                            }
+                            if c != 0 {
+                                println!("Can't find closing bracket for instruction {}", i);
+                                return;             //Can't find bracket
+                            }
+                        }
+                    },
                     ']' => {                                //End of loop
-                                if ar[*p] != 0 {
-                                    is_cycled = true;
-                                    let mut c = 0;
-                                    for j in (0..i).rev() { //Search for opening bracket to create loop
-                                        match s.chars().skip(j).next().unwrap() {
-                                            '[' => {
-                                                if c > 0 {
-                                                    c -= 1;
-                                                }
-                                                else {
-                                                    skip = s.len() - i + j;
-                                                    break; //Found
-                                                }
-                                            },
-                                            ']' => {
-                                                c += 1;
-                                            },
-                                            _   => {},
+                        if ar[*p] != 0 {
+                            is_cycled = true;
+                            let mut c = 0;
+                            for j in (0..i).rev() { //Search for opening bracket to create loop
+                                match s.chars().skip(j).next().unwrap() {
+                                    '[' => {
+                                        if c > 0 {
+                                            c -= 1;
                                         }
-                                    }
-                                    if c != 0 {
-                                        println!("Can't find opening bracket for instruction {}", i);
-                                        return;           //Can't find
-                                    }
+                                        else {
+                                            skip = s.len() - i + j;
+                                            break; //Found
+                                        }
+                                    },
+                                    ']' => {
+                                        c += 1;
+                                    },
+                                    _   => {},
                                 }
-                            },
+                            }
+                            if c != 0 {
+                                println!("Can't find opening bracket for instruction {}", i);
+                                return;           //Can't find
+                            }
+                        }
+                    },
                     _ => {},
                 }
             }
@@ -143,10 +164,7 @@ fn main() -> io::Result<()> {
     let start = PreciseTime::now();                 //Save current time for a nice statistics
     parse(code, &mut pointer, &mut array);
     let end = PreciseTime::now();                   //Save time of ending parse work
-    println!("Done in {} milliseconds", start.to(end).num_milliseconds());  //print nice statistics
-
-
-
+    println!("\n\nDone in {} milliseconds", start.to(end).num_milliseconds());  //print nice statistics
 
     Ok(())
 }
